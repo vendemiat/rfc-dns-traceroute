@@ -154,6 +154,69 @@ The option is structured as follows:
 * Client receives answer with 2 TRACE options in OPT: {{FLAGS: 0, NSID-LENGTH: 1, FAMILY: 1, ['A'], [SRC-IP], [DST-IP]}, {}}
 * Client establishes a Closed Path between Client - Resolver - Authoritative.
 
+## Complete Path Example with multiple chained resolvers
+
+* Client (C) inserts an empty TRACE option to query to Resolver (R1) OPT:[{}]
+* Resolver (R1) copies empty TRACE option to query to Resolver (R2) OPT:[{}]
+* Resolver (R2) copies empty TRACE option to query to Authoritative (A) OPT:[{}]
+* Authoritative (A) sends empty TRACE signaling support OPT:[{}]
+* Resolver (R2) appends TRACE between Resolver and Authoritative (A)
+* Resolver (R2) establishes closed Path and appends terminal TRACE: [
+    {FLAGS:0, NSID-LENGTH:1, FAMILY:1 , ['A'], [SRC-IP], [DST-IP]},
+    {} ]
+* Resolver(R1) appends TRACE between Resolver (R1) and Resolver (R2)
+* Resolver (R1) preserves the terminal trace for Closed path : [
+    {FLAGS:0, NSID-LENGTH:1, FAMILY:1 , ['A'], [SRC-IP], [DST-IP]},
+    {FLAGS:0, NSID-LENGTH:2, FAMILY:1 , ['R2'], [SRC-IP], [DST-IP]},
+    {} ]
+* Client (C) establishes a Closed path between Client - R1 - R2 - Authoritative
+
+## no TRACE support in Auth
+
+* Client (C) inserts an empty TRACE option to query to Resolver (R) OPT:[{}]
+* Resolver (R) copies empty TRACE option to query to Authoritative (A) OPT:[{}]
+* Authoritative doesn't support TRACE, returns normal response  OPT:[]
+* Resolver appends TRACE between Resolver and Authoritative : [{FLAGS:0, NSID-LENGTH:1, FAMILY:1 , ['A'], [SRC-IP], [DST-IP]}]
+* Client (C) establishes a path between Client - Resolver - Authoritative
+* terminal TRACE is absent because authoritative doesn't support TRACE option
+
+## no TRACE and NSID support in Auth
+
+* Client (C) inserts an empty TRACE option to query to Resolver (R) OPT:[{}]
+* Resolver (R) copies empty TRACE option to query to Authoritative (A) OPT:[{}]
+* Authoritative doesn't support TRACE, returns normal response  OPT:[]
+* Resolver appends TRACE between Resolver and Authoritative : [{FLAGS:0, NSID-LENGTH:0, FAMILY:1 , [''], [SRC-IP], [DST-IP]}]
+* Client (C) establishes a path between Client - Resolver - Authoritative
+* terminal TRACE is absent because authoritative doesn't support TRACE option
+
+## no TRACE and NSID support in Auth, multiple resolvers
+
+* Client (C) inserts an empty TRACE option to query to Resolver (R1) OPT:[{}]
+* Resolver (R1) copies empty TRACE option to query to Resolver (R2) OPT:[{}]
+* Resolver (R2) copies empty TRACE option to query to Authoritative (A) OPT:[{}]
+* Authoritative (A) doesn't support TRACE, returns normal response  OPT:[]
+* Resolver(R2) appends TRACE between Resolver (R2) and Authoritative (A) : [{FLAGS:0, NSID-LENGTH:1, FAMILY:1 , ['A'], [SRC-IP], [DST-IP]}]
+* Resolver(R1) appends TRACE between Resolver (R1) and Resolver (R2) : [
+    {FLAGS:0, NSID-LENGTH:1, FAMILY:1 , ['A'], [SRC-IP], [DST-IP]},
+    {FLAGS:0, NSID-LENGTH:2, FAMILY:1 , ['R2'], [SRC-IP], [DST-IP]} ]
+* Client (C) establishes a path between Client - R1 - R2 - Authoritative
+* terminal TRACE is absent because authoritative doesn't support TRACE option
+
+## Complete Path, multiple Auth servers
+
+* Client (C) inserts an empty TRACE option to query to Resolver (R). OPT:[{}]
+* Resolver (R) copies empty TRACE option to query to Authoritative (A1). OPT:[{}]
+* Resolver (R) copies empty TRACE option to query to Authoritative (A2). OPT:[{}]
+* Resolver (R) copies empty TRACE option to query to Authoritative (A3). OPT:[{}]
+* A1 is leaf responds with with empty TRACE  OPT:[{}]
+* A2 is leaf responds with with empty TRACE  OPT:[{}]
+* A3 doesn't support TRACE, responds with OPT:[]
+* Resolver (R) appends TRACE options, OPT: [
+    {FLAGS: 0, NSID-LENGTH: 2, FAMILY: 1, ['A1'], [SRC-IP], [DST-IP]},
+    {FLAGS: 0, NSID-LENGTH: 2, FAMILY: 1, ['A2'], [SRC-IP], [DST-IP]},
+    {FLAGS: 0, NSID-LENGTH: 2, FAMILY: 1, ['A3'], [SRC-IP], [DST-IP]} ]
+* terminal TRACE is absent because authoritative (A3) doesn't support TRACE option
+
 TBD
 
 # Use cases
